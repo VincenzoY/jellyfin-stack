@@ -24,8 +24,12 @@ services:
     devices:
       - '/dev/dri:/dev/dri'
     volumes:
-      - '${BASE_PATH}/jellyfin/config:/config'
-      - '${MEDIA_SHARE}/media:/media'
+      - type: bind
+        source: '${BASE_PATH}/jellyfin/config'
+        target: /config
+      - type: bind
+        source: '${MEDIA_SHARE}/media'
+        target: /media
     restart: unless-stopped
     networks:
       - proxy
@@ -38,8 +42,12 @@ services:
       - 'PGID=${PGID}'
       - 'TZ=${TZ}'
     volumes:
-      - '${BASE_PATH}/radarr/config:/config'
-      - '${MEDIA_SHARE}:/data'
+      - type: bind
+        source: '${BASE_PATH}/radarr/config'
+        target: /config
+      - type: bind
+        source: '${MEDIA_SHARE}'
+        target: /data
     ports:
       - '7878:7878'
     networks:
@@ -55,8 +63,12 @@ services:
       - 'PGID=${PGID}'
       - 'TZ=${TZ}'
     volumes:
-      - '${BASE_PATH}/sonarr/config:/config'
-      - '${MEDIA_SHARE}:/data'
+      - type: bind
+        source: '${BASE_PATH}/sonarr/config'
+        target: /config
+      - type: bind
+        source: '${MEDIA_SHARE}'
+        target: /data
     ports:
       - '8989:8989'
     networks:
@@ -73,7 +85,9 @@ services:
       - 'PGID=${PGID}'
       - 'TZ=${TZ}'
     volumes:
-      - '${BASE_PATH}/prowlarr/config:/config'
+      - type: bind
+        source: '${BASE_PATH}/prowlarr/config'
+        target: /config
     restart: unless-stopped
   autobrr:
     container_name: autobrr
@@ -85,7 +99,9 @@ services:
       - 'PUID=${PUID}'
       - 'PGID=${PGID}'
     volumes:
-      - '${BASE_PATH}/autobrr/config:/config'
+      - type: bind
+        source: '${BASE_PATH}/autobrr/config'
+        target: /config
   seerr:
     image: 'ghcr.io/seerr-team/seerr:latest'
     container_name: seerr
@@ -95,8 +111,12 @@ services:
       - 'PGID=${PGID}'
       - 'TZ=${TZ}'
     volumes:
-      - '${BASE_PATH}/seerr/config:/app/config'
-      - '${MEDIA_SHARE}:/data'
+      - type: bind
+        source: '${BASE_PATH}/seerr/config'
+        target: /app/config
+      - type: bind
+        source: '${MEDIA_SHARE}'
+        target: /data
     networks:
       - proxy
       - starr
@@ -134,8 +154,12 @@ services:
       - UMASK=002
       - WEBUI_HOST_HEADER_VALIDATION=false
     volumes:
-      - '${BASE_PATH}/qbittorent/config:/config'
-      - '${MEDIA_SHARE}:/data'
+      - type: bind
+        source: '${BASE_PATH}/qbittorent/config'
+        target: /config
+      - type: bind
+        source: '${MEDIA_SHARE}'
+        target: /data
     restart: unless-stopped
   wizarr:
     container_name: wizarr
@@ -144,8 +168,12 @@ services:
     ports:
       - '5690:5690'
     volumes:
-      - '${BASE_PATH}/wizarr/data/database:/data/database'
-      - '${BASE_PATH}/wizarr/cache:/.cache'
+      - type: bind
+        source: '${BASE_PATH}/wizarr/data/database'
+        target: /data/database
+      - type: bind
+        source: '${BASE_PATH}/wizarr/cache'
+        target: /.cache
     networks:
       - proxy
       - starr
@@ -194,7 +222,9 @@ services:
       POSTGRES_USER: '${JELLYSTATDB_USER:-postgres}'
       POSTGRES_PASSWORD: '${JELLYSTATDB_PASS:-password}'
     volumes:
-      - '${BASE_PATH}/jellystat/postgres-data:/var/lib/postgresql/data'
+      - type: bind
+        source: '${BASE_PATH}/jellystat/postgres-data'
+        target: /var/lib/postgresql/data
     restart: unless-stopped
     networks:
       - jellystat
@@ -210,7 +240,9 @@ services:
     ports:
       - '3000:3000'
     volumes:
-      - '${BASE_PATH}/jellystat/postgres-backup:/app/backend/backup-data'
+      - type: bind
+        source: '${BASE_PATH}/jellystat/postgres-backup'
+        target: /app/backend/backup-data
     depends_on:
       - jellystat-db
     restart: unless-stopped
