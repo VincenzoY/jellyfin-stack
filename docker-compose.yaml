@@ -1,0 +1,325 @@
+version: '3.0'
+networks:
+  proxy:
+    external: true
+  jellyfin_default:
+    external: true
+  starr:
+    external: true
+  jellystat:
+    external: true
+  gluetun_network:
+    external: true
+services:
+  jellyfin:
+    image: 'lscr.io/linuxserver/jellyfin:latest'
+    container_name: jellyfin
+    environment:
+      - 'JELLYFIN_PublishedServerUrl=${JELLYFIN_URL}'
+      - 'PUID=${PUID}'
+      - 'PGID=${PGID}'
+    ports:
+      - '8096:8096'
+      - '8920:8920'
+    devices:
+      - '/dev/dri:/dev/dri'
+    volumes:
+      - '${BASE_PATH}/jellyfin/config:/config'
+      - '${MEDIA_SHARE}/media:/media'
+    restart: unless-stopped
+    networks:
+      - proxy
+      - starr
+  radarr:
+    image: 'lscr.io/linuxserver/radarr:latest'
+    container_name: radarr
+    environment:
+      - 'PUID=${PUID}'
+      - 'PGID=${PGID}'
+      - 'TZ=${TZ}'
+    volumes:
+      - '${BASE_PATH}/radarr/config:/config'
+      - '${MEDIA_SHARE}:/data'
+    ports:
+      - '7878:7878'
+    networks:
+      proxy: null
+      starr: null
+      gluetun_network:
+        ipv4_address: '${RADARR_IPV4}'
+    restart: unless-stopped
+  sonarr:
+    image: 'lscr.io/linuxserver/sonarr:latest'
+    container_name: sonarr
+    environment:
+      - 'PUID=${PUID}'
+      - 'PGID=${PGID}'
+      - 'TZ=${TZ}'
+    volumes:
+      - '${BASE_PATH}/sonarr/config:/config'
+      - '${MEDIA_SHARE}:/data'
+    ports:
+      - '8989:8989'
+    networks:
+      proxy: null
+      starr: null
+      gluetun_network:
+        ipv4_address: '${SONARR_IPV4}'
+    restart: unless-stopped
+  prowlarr:
+    image: 'lscr.io/linuxserver/prowlarr:latest'
+    container_name: prowlarr
+    network_mode: 'service:gluetun'
+    environment:
+      - 'PUID=${PUID}'
+      - 'PGID=${PGID}'
+      - 'TZ=${TZ}'
+    volumes:
+      - '${BASE_PATH}/prowlarr/config:/config'
+    restart: unless-stopped
+  autobrr:
+    container_name: autobrr
+    image: 'ghcr.io/autobrr/autobrr:latest'
+    restart: unless-stopped
+    network_mode: 'service:gluetun'
+    environment:
+      - 'TZ=${TZ}'
+      - 'PUID=${PUID}'
+      - 'PGID=${PGID}'
+    volumes:
+      - '${BASE_PATH}/autobrr/config:/config'
+  seerr:
+    image: 'ghcr.io/seerr-team/seerr:latest'
+    container_name: seerr
+    init: true
+    environment:
+      - 'PUID=${PUID}'
+      - 'PGID=${PGID}'
+      - 'TZ=${TZ}'
+    volumes:
+      - '${BASE_PATH}/seerr/config:/app/config'
+      - '${MEDIA_SHARE}:/data'
+    networks:
+      - proxy
+      - starr
+    ports:
+      - '5055:5055'
+    healthcheck:
+      test: 'wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1'
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      retries: 3
+    restart: unless-stopped
+  qbittorrent:
+    image: 'lscr.io/linuxserver/qbittorrent:libtorrentv1'
+    container_name: qbittorrent
+    network_mode: 'service:gluetun'
+    environment:
+      - 'PUID=${PUID}'
+      - 'PGID=${PGID}'
+      - 'TZ=${TZ}'
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=8694
+      - UMASK=002
+    volumes:
+      - '${BASE_PATH}/qbittorent/config:/config'
+      - '${MEDIA_SHARE}:/data'
+    restart: unless-stopped
+  tdarr:
+    container_name: tdarr
+    image: 'ghcr.io/haveagitgat/tdarr:latest'
+    restart: unless-stopped
+    ports:
+      - '8265:8265'
+      - '8266:8266'
+    environment:
+      - 'TZ=${TZ}'
+      - 'PUID=${PUID}'
+      - 'PGID=${PGID}'
+      - UMASK_SET=002
+      - nodeName=ServerNode
+      - serverIP=0.0.0.0
+      - serverPort=8266
+      - webUIPort=8265
+      - internalNode=true
+      - inContainer=true
+      - ffmpegVersion=6
+    volumes:
+      - '${BASE_PATH}/tdarr/server:/app/server'
+      - '${BASE_PATH}/tdarr/configs:/app/configs'
+      - '${BASE_PATH}/tdarr/logs:/app/logs'
+      - '${MEDIA_SHARE}:/data'
+      - '${TRANSCODE_PATH:-/transcode_cache}:/temp'
+    devices:
+      - '/dev/dri:/dev/dri'
+    networks:
+      - proxy
+  bazarr:
+    container_name: bazarr
+    image: 'lscr.io/linuxserver/bazarr:latest'
+    restart: unless-stopped
+    network_mode: 'service:gluetun'
+    environment:
+      - 'PUID=${PUID}'
+      - 'PGID=${PGID}'
+      - 'TZ=${TZ}'
+    volumes:
+      - '${BASE_PATH}/bazarr/config:/config'
+      - '${MEDIA_SHARE}:/data'
+  wizarr:
+    container_name: wizarr
+    image: 'ghcr.io/wizarrrr/wizarr:latest'
+    restart: unless-stopped
+    ports:
+      - '5690:5690'
+    volumes:
+      - '${BASE_PATH}/wizarr/data/database:/data/database'
+      - '${BASE_PATH}/wizarr/cache:/.cache'
+    networks:
+      - proxy
+      - starr
+    environment:
+      - 'APP_URL=${WIZARR_URL}'
+      - DISABLE_BUILTIN_AUTH=false
+      - 'TZ=${TZ}'
+      - 'PUID=${PUID}'
+      - 'PGID=${PGID}'
+  dozzle:
+    container_name: dozzle
+    image: 'amir20/dozzle:latest'
+    restart: unless-stopped
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    ports:
+      - '9999:8080'
+  gluetun:
+    image: 'qmcgaw/gluetun:v3'
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+    devices:
+      - '/dev/net/tun:/dev/net/tun'
+    environment:
+      - 'DNS_UPSTREAM_RESOLVERS=${GLUETUN_DNS_UPSTREAM_RESOLVERS:-gluetun}'
+      - 'VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER:-mullvad}'
+      - 'VPN_TYPE=${VPN_TYPE:-wireguard}'
+      - 'WIREGUARD_PRIVATE_KEY=${WIREGUARD_KEY}'
+      - 'WIREGUARD_ADDRESSES=${WIREGUARD_ADD}'
+      - 'SERVER_CITIES=${VPN_SERVER_CITIES}'
+      - UPDATER_PERIOD=24h
+      - 'UPDATER_VPN_SERVICE_PROVIDERS=${VPN_SERVICE_PROVIDER:-mullvad}'
+      - 'WIREGUARD_MTU=${WIREGUARD_MTU:-1200}'
+      - 'PUBLICIP_API=${PUBLICIP_API}'
+      - 'PUBLICIP_API_TOKEN=${PUBLICIP_TOKEN}'
+      - 'VPN_PORT_FORWARDING=${VPN_PORT_FORWARDING}'
+      - 'VPN_PORT_FORWARDING_UP_COMMAND=/bin/sh -c ''wget -O- --retry-connrefused --post-data "json={\"listen_port\":{{PORT}},\"current_network_interface\":\"{{VPN_INTERFACE}}\",\"random_port\":false,\"upnp\":false}" http://127.0.0.1:8080/api/v2/app/setPreferences 2>&1'''
+      - 'VPN_PORT_FORWARDING_DOWN_COMMAND=/bin/sh -c ''wget -O- --retry-connrefused --post-data "json={\"listen_port\":0,\"current_network_interface\":\"lo"}" http://127.0.0.1:8080/api/v2/app/setPreferences 2>&1'''
+      - 'UPDATER_PROTONVPN_EMAIL=${UPDATER_PROTONVPN_EMAIL:-}'
+      - 'UPDATER_PROTONVPN_PASSWORD=${UPDATER_PROTONVPN_PASSWORD:-}'
+      - 'OPENVPN_USER=${OPENVPN_USER:-}'
+      - 'OPENVPN_PASSWORD=${OPENVPN_PASSWORD:-}'
+    ports:
+      - '2468:2468/tcp'
+      - '8080:8080/tcp'
+      - '8694:8694/tcp'
+      - '5757:5757/tcp'
+      - '8191:8191/tcp'
+      - '9696:9696/tcp'
+      - '7474:7474/tcp'
+      - '9191:9191'
+      - '6767:6767'
+    networks:
+      - starr
+      - proxy
+      - gluetun_network
+  decluttarr:
+    image: 'ghcr.io/manimatter/decluttarr:latest'
+    container_name: decluttarr
+    restart: unless-stopped
+    environment:
+      TZ: '${TZ}'
+      PUID: '${PUID}'
+      PGID: '${PGID}'
+      LOG_LEVEL: INFO
+      TIMER: 10
+      REMOVE_FAILED_DOWNLOADS: true
+      REMOVE_METADATA_MISSING: true
+      REMOVE_MISSING_FILES: true
+      REMOVE_ORPHANS: true
+      REMOVE_SLOW: true
+      REMOVE_STALLED: true
+      REMOVE_UNMONITORED: true
+      SEARCH_MISSING: "min_days_between_searches: 7\nmax_concurrent_searches: 3\n"
+      MAX_STRIKES: 3
+      PROTECTED_TAG: "Don't Kill"
+      MIN_SPEED: 100
+      REMOVE_FAILED_IMPORTS: "message_patterns:\n - \"Not a Custom Format upgrade for existing\"\n - \"Not an upgrade for existing\"\n"
+      RADARR: "- base_url: \"http://radarr:7878\"\n  api_key: \"$RADARR_KEY\"\n"
+      SONARR: "- base_url: \"http://sonarr:8989\"\n  api_key: \"$SONARR_KEY\"\n"
+      LIDARR: "- base_url: \"http://lidarr:8686\"\n  api_key: \"$LIDARR_KEY\"\n"
+      READARR: "- base_url: \"http://readarr:8787\"\n  api_key: \"$READARR_KEY\"\n"
+      QBITTORRENT: "- base_url: \"http://gluetun:8080\"\n  username: \"$QBIT_USER\"\n  password: \"$QBIT_PASS\"\n"
+    networks:
+      - starr
+      - proxy
+  jellystat-db:
+    image: 'postgres:15.2'
+    container_name: jellystat-db
+    environment:
+      POSTGRES_DB: jfstat
+      POSTGRES_USER: '${JELLYSTATDB_USER:-postgres}'
+      POSTGRES_PASSWORD: '${JELLYSTATDB_PASS:-password}'
+    volumes:
+      - '${BASE_PATH}/jellystat/postgres-data:/var/lib/postgresql/data'
+    restart: unless-stopped
+    networks:
+      - jellystat
+  jellystat:
+    image: 'cyfershepard/jellystat:latest'
+    container_name: jellystat
+    environment:
+      POSTGRES_USER: '${JELLYSTATDB_USER:-postgres}'
+      POSTGRES_PASSWORD: '${JELLYSTATDB_PASS:-password}'
+      POSTGRES_IP: jellystat-db
+      POSTGRES_PORT: 5432
+      JWT_SECRET: "${JWT_SECRET:-'my-secret-jwt-key'}"
+    ports:
+      - '3000:3000'
+    volumes:
+      - '${BASE_PATH}/jellystat/postgres-backup:/app/backend/backup-data'
+    depends_on:
+      - jellystat-db
+    restart: unless-stopped
+    networks:
+      - jellystat
+      - proxy
+      - starr
+  janitorr:
+    container_name: janitorr
+    image: 'ghcr.io/schaka/janitorr:jvm-stable'
+    user: '${PUID}:${PGID}'
+    volumes:
+      - '${BASE_PATH}/janitorr/application.yml:/workspace/application.yml'
+      - '${BASE_PATH}/janitorr/logs:/logs'
+      - '${MEDIA_SHARE}:/data'
+    healthcheck:
+      test: 'wget -T5 -qO- http://localhost:8081/health | grep UP || exit 1'
+      start_period: 30s
+      interval: 5s
+      retries: 3
+    networks:
+      - starr
+  profilarr:
+    image: 'santiagosayshey/profilarr:latest'
+    container_name: profilarr
+    ports:
+      - '6868:6868'
+    volumes:
+      - '${BASE_PATH}/profilarr:/config'
+    environment:
+      - 'TZ=${TZ}'
+    restart: unless-stopped
+    networks:
+      - starr
