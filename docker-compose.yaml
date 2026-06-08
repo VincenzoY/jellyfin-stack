@@ -43,10 +43,9 @@ services:
     ports:
       - '7878:7878'
     networks:
-      proxy: null
-      starr: null
-      gluetun_network:
-        ipv4_address: '${RADARR_IPV4}'
+      - proxy
+      - starr
+      - gluetun_network
     restart: unless-stopped
   sonarr:
     image: 'lscr.io/linuxserver/sonarr:latest'
@@ -61,10 +60,9 @@ services:
     ports:
       - '8989:8989'
     networks:
-      proxy: null
-      starr: null
-      gluetun_network:
-        ipv4_address: '${SONARR_IPV4}'
+      - proxy
+      - starr
+      - gluetun_network
     restart: unless-stopped
   prowlarr:
     image: 'lscr.io/linuxserver/prowlarr:latest'
