@@ -80,6 +80,8 @@ services:
     image: 'lscr.io/linuxserver/prowlarr:latest'
     container_name: prowlarr
     network_mode: 'service:gluetun'
+    depends_on:
+      - gluetun
     environment:
       - 'PUID=${PUID}'
       - 'PGID=${PGID}'
@@ -94,6 +96,8 @@ services:
     image: 'ghcr.io/autobrr/autobrr:latest'
     restart: unless-stopped
     network_mode: 'service:gluetun'
+    depends_on:
+      - gluetun
     environment:
       - 'TZ=${TZ}'
       - 'PUID=${PUID}'
@@ -133,6 +137,8 @@ services:
     image: alexfozor/flaresolverr:pr-1300-experimental
     container_name: flaresolverr
     network_mode: "service:gluetun"
+    depends_on:
+      - gluetun
     environment:
       - LOG_LEVEL=info
       - LOG_HTML=false
@@ -145,6 +151,8 @@ services:
     image: 'lscr.io/linuxserver/qbittorrent:libtorrentv1'
     container_name: qbittorrent
     network_mode: 'service:gluetun'
+    depends_on:
+      - gluetun
     environment:
       - 'PUID=${PUID}'
       - 'PGID=${PGID}'
