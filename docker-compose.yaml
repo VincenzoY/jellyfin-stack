@@ -220,7 +220,7 @@ services:
       - 'OPENVPN_PASSWORD=${OPENVPN_PASSWORD:-}'
     ports:
       - '2468:2468/tcp'
-      - '8080:8080/tcp'
+      - '8085:8080/tcp'
       - '8694:8694/tcp'
       - '5757:5757/tcp'
       - '8191:8191/tcp'
