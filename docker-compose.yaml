@@ -1,15 +1,15 @@
 version: '3.0'
 networks:
   proxy:
-    external: true
+    driver: bridge
   jellyfin_default:
-    external: true
+    driver: bridge
   starr:
-    external: true
+    driver: bridge
   jellystat:
-    external: true
+    driver: bridge
   gluetun_network:
-    external: true
+    driver: bridge
 services:
   jellyfin:
     image: 'lscr.io/linuxserver/jellyfin:latest'
