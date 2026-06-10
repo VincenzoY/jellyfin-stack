@@ -170,6 +170,25 @@ services:
         source: '${MEDIA_SHARE}'
         target: /data
     restart: unless-stopped
+  sabnzbd:
+    image: 'lscr.io/linuxserver/sabnzbd:latest'
+    container_name: sabnzbd
+    network_mode: 'service:gluetun'
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    environment:
+      - 'PUID=${PUID}'
+      - 'PGID=${PGID}'
+      - 'TZ=${TZ}'
+    volumes:
+      - type: bind
+        source: '${BASE_PATH}/sabnzbd/config'
+        target: /config
+      - type: bind
+        source: '${MEDIA_SHARE}'
+        target: /data
+    restart: unless-stopped
   wizarr:
     container_name: wizarr
     image: 'ghcr.io/wizarrrr/wizarr:latest'
@@ -212,6 +231,7 @@ services:
     ports:
       - '2468:2468/tcp'
       - '8085:8085/tcp'
+      - '8086:8080/tcp'
       - '8694:8694/tcp'
       - '5757:5757/tcp'
       - '8191:8191/tcp'
