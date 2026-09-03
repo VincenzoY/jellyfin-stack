@@ -308,8 +308,8 @@ services:
         source: '${BASE_PATH}/tdarr/logs'
         target: /app/logs
       - type: bind
-        source: '${MEDIA_SHARE}/media'
-        target: /media
+        source: '${MEDIA_SHARE}'
+        target: /data
       - type: bind
         source: '${BASE_PATH}/tdarr/transcode_cache'
         target: /temp
